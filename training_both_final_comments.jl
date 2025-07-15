@@ -85,41 +85,7 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
         weights[cc, cc] = 0 #no autapses == self-loops
     end
 
-    #=
-        #Define clusters    (you are creating a matrix of rows Npop and columns Nmaxmembers, that goes from 1 to Npop*Nmaxmemebrs)
-        popmembers=zeros(Int64,Npop,Nmaxmembers)   #HYP: Npop is the # of clusters, Nmaxmembers is the max # of neurons in each cluster
-        xx=0
-        for i = 1: Nmaxmembers:(Npop*Nmaxmembers)
-            xx+=1
-            popmembers[xx,:]=collect(i:(i+Nmaxmembers-1))
-        end
-
-        #Stimulation  ORDER (can be improved potentially by removing append)
-        Assembly_index=[1:Npop;]::Vector{Int64} #equal to 1:Npop // ; used to make it  a vector
-        stimulation=shuffle(Assembly_index) #Stimulation Slots #first trial
-        for ii = 2:N_trials
-            shuffle!(Assembly_index) #random stimulation order
-            while stimulation[end]==Assembly_index[1] #don't allow that trial ends with stimulation of assembly that was just activated (makes sense but why?)
-                shuffle!(Assembly_index)
-            end
-            append!(stimulation, Assembly_index)
-        end
-
-        #stimulus matrix is in the following format:
-        #column 1: index of stimulated population
-        #columns 2/3: start/stop time of stimulus
-        #column 4: rate of external drive (in kHz)
-
-        stim = zeros(Npop*N_trials,4) #Rows, number of stimulations
-        for i=1:size(stimulation)[1]
-            stim[i,1]= stimulation[i]    #stimulation order
-            stim[i,2]=train_start+(i-1)*(stim_time + gap_time)              
-            stim[i,3]=(train_start+stim_time)+(i-1)*(stim_time + gap_time)
-            stim[i,4]= stim_rate #stimulation orderrate increase (why saving it if it's constant everywhere?)
-
-            #1s stimulation, 1s gap   (why? evidence?)
-        end
-        =#
+    #
 
     ###initialisation###
     times = zeros(Ncells, Nspikes) #generate matrix with spike times for each neuron
@@ -207,30 +173,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
         tprev = (dt * (tt - 1)) #time one timestep before
         ###END BIOLOGICAL TIME
 
-        #=
-                ###STIMULATION OF E SUBPOPULATIONS & I NEURONS###
-                #see runsim.jl for description of stim matrix
-                for ss = 1:size(stim)[1] #looping over subpopulations of E neurons
-                    if (tprev<stim[ss,2]) && (t>=stim[ss,2])  #just entered stimulation period   theoretically equivalent to t ==  stim[ss,2]
-                        ipop = round(Int,stim[ss,1]) #number of subpopulation
-                        for ii = 1:Nmaxmembers #loop over all members of a subpopulation
-                            if popmembers[ipop,ii] == 0 #because popmembers was initialised with zero matrix (? no it wasn't)
-                                break
-                            end
-                            rx[popmembers[ipop,ii]] += stim[ss,4] #increase input rate to E neuron in subpopulation  (YOU EXCITE WHEN IT ENTERS ITS STIMULATION PERIOD)
-                        end
-                    end
-                    if (tprev<stim[ss,3]) && (t>=stim[ss,3]) #just left stimulation period
-                        ipop = round(Int,stim[ss,1])
-                        for ii = 1:Nmaxmembers
-                            if popmembers[ipop,ii] == 0
-                                break
-                            end
-                            rx[popmembers[ipop,ii]] -= stim[ss,4]    #AND THEN REMOVE THE EXCITATION
-                        end
-                    end
-                end #end loop over stimuli 
-        =#
         ###POISSON INPUT###
         INP = (rand(Uniform(), Ncells) .<= rx .* dt)::BitVector  #creating a train of inputs. if rx.*dt is clse to 1 (it means the stimulation frequency is high), high change that the 
         #the external input rx will create an input current INP
@@ -252,13 +194,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
         spiked = falses(Ncells) #spike occurence
         for cc = 1:Ncells
             #=
-                ###plasticity detectors, forward euler###
-                x[cc] += -dt*x[cc]/tau_ipv #inhibitory traces
-                y[cc] += -dt*y[cc]/tau_isst #inhibitory traces
-                o1[cc] += -dt*o1[cc]/tau_minus #triplet terms
-                o2[cc] += -dt*o2[cc]/tau_y
-                r1[cc] += -dt*r1[cc]/tau_plus
-                r2[cc] += -dt*r2[cc]/tau_x
             =#
             ###UPDATE Current BECAUSE OF POISSON INPUT###
             #for input spike trains
@@ -369,131 +304,7 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
                 end #end if(spiked)
             end #end if(not refractory)
 
-            ### iSTP IMPLEMENTATION (Matej)
             #
-            #Description of network dynamics:
-            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
-
-            #Tsodyks-Markram model for STP mechanisms (Neural networks with dynamic synapses.Neural Comput.10, 821–835 (1998).)
-            dx_EPdt = (1-x_EP)/tau_x - U_d*x_EP*r_P
-            dx_PPdt = (1-x_PP)/tau_x - U_d*x_PP*r_P
-            dx_VPdt = (1-x_VP)/tau_x - U_d*x_VP*r_P
-            du_VSdt = (1-u_VS)/tau_u + U_f*(U_max - u_VS)*r_S
-            #
-
-            #the r variables are not defined constants (makes sense, that's the DE's), neither is u_VS (oversight on my end?) and x_ also isn't
-            #
-
-            #update values:
-            r_E = r_E + (dr_Edt * dt)
-            r_P = r_P + (dr_Pdt * dt)
-            r_S = r_S + (dr_Sdt * dt)
-            r_V = r_V + (dr_Vdt * dt)
-
-            x_EP = x_EP + (dx_EPdt * dt)
-            x_PP = x_PP + (dx_PPdt * dt)
-            x_VP = x_VP + (dx_VPdt * dt)
-            u_VS = u_VS + (du_VSdt * dt)
-
-            #=
-                        if t > 100 ## plasticity after 100ms 
-                            ###iSTDP###
-                            #I to E#
-                            if spiked[cc]
-                                if cc <= Ne #excitatory neuron fired, potentiate i to e synapse -> postsynaptic spike occured
-            						if PV_symmetric
-            							for dd = (Ne+1):(Ne+Np) #PV
-            								if weights[dd,cc] == 0. # zero weight, no synapses, therefore continue 
-            									continue
-            								end
-
-            								weights[dd,cc] += eta_pv*x[dd]
-
-            								if weights[dd,cc] > jepmax #upper bound
-            									weights[dd,cc] = jepmax
-                                            elseif weights[dd,cc] < jepmin #upper bound
-            									weights[dd,cc] = jepmin
-            								end
-            							end
-                                        x[cc] += 1
-            					    end
-
-                                    if SST_hebb
-                                        for dd = (Ne+Np+1):Ne+Np+Ns
-                                            if any(dd .== range_plast_sst) #SST first, then E -> hebbian potentiation
-                                                if weights[dd,cc] == 0. # zero weight, no synapses, therefore continue
-                                                    continue
-                                                end
-                                                weights[dd,cc] += a_pre*y[dd]
-                                                if weights[dd,cc] > jesmax #upper bound
-                                                    weights[dd,cc] = jesmax
-                                                elseif weights[dd,cc] < jesmin #upper bound
-                                                    weights[dd,cc] = jesmin
-                                                end
-                                            end
-                                        end
-                                        y[cc] += 1
-                                    end     
-
-                                elseif Ne < cc <= (Ne+Np) #pv neuron fired, modify weight to e neurons ->presynaptic spike occured
-            						if PV_symmetric
-            							for dd = 1:Ne
-            								if weights[cc,dd] == 0.
-            									continue
-            								end
-            								weights[cc,dd] += eta_pv*(x[dd] - 2*r0_pv*tau_ipv)
-            								if weights[cc,dd] > jepmax
-            									weights[cc,dd] = jepmax
-            								elseif weights[cc,dd] < jepmin
-            									weights[cc,dd] = jepmin
-            								end
-            							end
-                                        x[cc] += 1
-            					    end
-
-                                elseif range_plast_sst[1] <= cc <= range_plast_sst[end] #sst neuron fired, modify weight to e neurons ->presynaptic spike occured
-                                    if SST_hebb #first E, then SST - hebbian depression
-                                        for dd = 1:Ne
-                                            if weights[cc,dd] == 0.
-                                                continue
-                                            end
-                                            weights[cc,dd] -= a_post*y[dd]
-                                            if weights[cc,dd] > jesmax
-                                                weights[cc,dd] = jesmax
-                                            elseif weights[cc,dd] < jesmin
-                                                weights[cc,dd] = jesmin
-                                            end
-                                        end
-                                        y[cc] += 1
-                                    end
-                                end
-                                ###iSTDP END#
-
-                             ###tSTDP###
-                            if cc <= Ne #presynaptic E neurons
-                                for dd = 1:Ne #postsynaptic E neurons
-                                    if weights[cc,dd] == 0. # zero weight, no synapses, therefore continue
-                                        continue
-                                    end
-                                    weights[cc,dd] += -o1[dd]*(A2_minus+A3_minus*r2[cc]) #presynaptic spike occurs
-                                    weights[cc,dd] += +r1[cc]*(A2_plus+A3_plus*o2[dd]) #postsynaptic spike occurs (no small epsilon, but weights are updated before traces anyway)
-
-                                    if weights[cc,dd] > jeemax
-                                        weights[cc,dd] = jeemax
-                                    elseif weights[cc,dd] < jeemin ### Bound synaptic weights
-                                        weights[cc,dd] = jeemin
-                                    end
-                                end
-                                #update traces AFTER weight updates
-                                r1[cc] +=1 #update presynaptic traces
-                                r2[cc] +=1 #update presynaptic traces
-                                o1[cc] +=1
-                                o2[cc] +=1
-                            end
-                            ###tSTDP END###
-                            end
-                        end
-                        =#
 
                     end #end loop over cells
 
@@ -534,6 +345,32 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
             end
         end
         
+            ### iSTP IMPLEMENTATION (Matej)
+            #Update variables each timestep
+            #Description of network dynamics:
+            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
+
+            #Tsodyks-Markram model for STP mechanisms (Neural networks with dynamic synapses.Neural Comput.10, 821–835 (1998).)
+            dx_EPdt = (1-x_EP)/tau_x - U_d*x_EP*r_P
+            dx_PPdt = (1-x_PP)/tau_x - U_d*x_PP*r_P
+            dx_VPdt = (1-x_VP)/tau_x - U_d*x_VP*r_P
+            du_VSdt = (1-u_VS)/tau_u + U_f*(U_max - u_VS)*r_S
+            #
+
+            #the r variables are not defined constants (makes sense, that's the DE's), neither is u_VS (oversight on my end?) and x_ also isn't
+            #
+
+            #update values:
+            r_E += (dr_Edt * dt)
+            r_P += (dr_Pdt * dt)
+            r_S += (dr_Sdt * dt)
+            r_V += (dr_Vdt * dt)
+
+            x_EP += clamp(dx_EPdt * dt, 0.0, 1.0)
+            x_PP += clamp(dx_PPdt * dt, 0.0, 1.0)
+            x_VP += clamp(dx_VPdt * dt, 0.0, 1.0)
+            u_VS += clamp(du_VSdt * dt, 0.0, 1.0)
+
     end #end loop over time
 
 
