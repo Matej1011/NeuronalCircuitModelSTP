@@ -17,7 +17,7 @@ function save_param(x_name, x_tuple)
     end
     return dict_param
 end
-
+#=
 function calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
     
     tau_E, tau_P, tau_S, tau_V, J_EE, J_EP, J_ES, J_PE, J_PP, J_PS, J_SE, J_SV, J_VE, J_VP, J_VS, U_d, tau_u, U_f, U_max, g_E, g_P, g_S, g_V, c, alpha = stp_param()
@@ -28,7 +28,7 @@ function calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
     dr_Vdt = (-r_V + ((J_VE*r_E - x_VP*J_VP*r_P - u_VS*J_VS*r_S + g_V + c) + abs(J_VE*r_E - x_VP*J_VP*r_P - u_VS*J_VS*r_S + g_V + c))/2) / tau_V
     return dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt
 end
-
+=#
 function sim(zzz) #runs simulation given weight matrix and subpopulations
     T, N_trials, stim_rate, train_start, t_weightsave, time_weightsave,
     save_weights, save_spikes, save_weights_name, save_partial, save_all, save_weight_partial,
@@ -56,21 +56,22 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     weights[(1+Ne+Np+Ns):Ncells, (1+Ne+Np):(Ne+Np+Ns)] .= (jsv) #VIP to SST
     weights[1:Ne, 1:Ne] .= jee0 #E to E
 
-    #initialize variables for STP functions 
-    r_E = 0.0
-    r_P = 0.0
-    r_S = 0.0
-    r_V = 0.0
     # "x_ij is a STD variable limited to the interval (0,1] for the synaptic connection from population j to population i"
-    x_EP = 1.0
-    x_PP = 1.0
-    x_VP = 1.0
-    u_VS = U_f
-
+    x_EP = ones(Ncells)
+    x_PP = ones(Ncells)
+    x_VP = ones(Ncells)
+    u_VS = zeros(Ncells)
+    u_VS .= U_f
+#=
     x_EP = clamp(x_EP, 0.0, 1.0)
     x_PP = clamp(x_PP, 0.0, 1.0)
     x_VP = clamp(x_VP, 0.0, 1.0)
     u_VS = clamp(u_VS, 0.0, U_max)
+=#
+    dx_EPdt = zeros(Ncells)
+    dx_PPdt = zeros(Ncells)
+    dx_VPdt = zeros(Ncells)
+    du_VSdt = zeros(Ncells)
 
     time1 = time()
 
@@ -144,6 +145,9 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     ns_prev = zeros(Int64, Ncells)
     tt_prev = 0
 
+    depression_spike = zeros(Ncells)
+    facilitation_spike = zeros(Ncells)
+
     Counting = 0
     for tt = 1:Nsteps #loop over time
         ###PROGRESS###
@@ -212,7 +216,7 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
 
 #testing to see what happens when I increase the current at a certain point in time
             if ((tt > 500) && (tt < 20000) && (cc > (Ne+Ns+Np)))
-                I_ext[cc] += dt * 0.1 / tauedecay
+                I_ext[cc] += dt * 0.05 / tauedecay
             end
 
             ###NEURON DYNAMICS
@@ -257,13 +261,15 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
                     end
                 end
                 ###LIF NEURONS END###
-
-
+                
+                depression_spike[cc] = 0
+                facilitation_spike[cc] = 0
+                
                 ###UPDATE WHEN SPIKE OCCURS
                 if spiked[cc] #spike occurred
                     v[cc] = vre #voltage back to reset potential
                     lastSpike[cc] = t #record last spike time
-
+                    
                     if ns[cc] == Nspikes + 10_000 * count_add #if you finished the space, you can make up some more
                         times = hcat(times, zeros(Ncells, 10_000))
                         count_add += 1
@@ -279,23 +285,28 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
                             times[cc, ns[cc]] = t #recording spiking times
                         end
                     end
-
+                    
                     if cc <= Ne
                         Ie .+= (weights[cc, :]) / tauedecay
+                        
 
                     elseif Ne < cc <= Np+Ne
                         #Ip .+= weights[cc, :] / taupdecay
                         #there are no PV-->SST connections so it's just altered stuff:
 
                         
-                        @views Ip[1:Ne] .+= weights[cc, 1:Ne] * x_EP / taupdecay #PV-->E connections; STD
-                        @views Ip[(1+Ne):(Ne+Np)] .+= weights[cc, (1+Ne):(Ne+Np)] * x_PP / taupdecay #PV-->PV connections; STD
-                        @views Ip[(1+Ne+Np+Ns):Ncells] .+= (weights[cc, (1+Ne+Np+Ns):Ncells] * x_VP / taupdecay) #PV-->VIP connections; STD
+                        @views Ip[1:Ne] .+= weights[cc, 1:Ne] .* x_EP[1:Ne] / taupdecay #PV-->E connections; STD
+                        @views Ip[(1+Ne):(Ne+Np)] .+= weights[cc, (1+Ne):(Ne+Np)] .* x_PP[(1+Ne):(Ne+Np)] / taupdecay #PV-->PV connections; STD
+                        @views Ip[(1+Ne+Np+Ns):Ncells] .+= (weights[cc, (1+Ne+Np+Ns):Ncells] .* x_VP[(1+Ne+Np+Ns):Ncells] / taupdecay) #PV-->VIP connections; STD
+
+                        depression_spike[cc] = U_d * x_EP[cc]
 
                     elseif (Ne+Np) < cc <= (Np+Ne+Ns)
                         @views Is[1:(Ne+Np+Ns)] .+= weights[cc, 1:(Ne+Np+Ns)] / tausdecay #S --> E, PV, S(no S-->S exist) connections; normal
 
-                        @views Is[(1+Ne+Np+Ns):Ncells] .+= weights[cc, (1+Ne+Np+Ns):Ncells] * u_VS / tausdecay #S-->VIP connections; STF
+                        @views Is[(1+Ne+Np+Ns):Ncells] .+= weights[cc, (1+Ne+Np+Ns):Ncells] .* u_VS[(1+Ne+Np+Ns):Ncells] / tausdecay #S-->VIP connections; STF
+
+                        facilitation_spike[cc] = U_f*(U_max - u_VS[cc])
 
                     else
                         Iv .+= weights[cc, :] / tauvdecay
@@ -348,28 +359,32 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
             ### iSTP IMPLEMENTATION (Matej)
             #Update variables each timestep
             #Description of network dynamics:
-            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
+#            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
 
             #Tsodyks-Markram model for STP mechanisms (Neural networks with dynamic synapses.Neural Comput.10, 821–835 (1998).)
-            dx_EPdt = (1-x_EP)/tau_x - U_d*x_EP*r_P
-            dx_PPdt = (1-x_PP)/tau_x - U_d*x_PP*r_P
-            dx_VPdt = (1-x_VP)/tau_x - U_d*x_VP*r_P
-            du_VSdt = (1-u_VS)/tau_u + U_f*(U_max - u_VS)*r_S
-            #
+            dx_EPdt = ((1 .- x_EP)/tau_x .- depression_spike)
+            dx_PPdt = ((1 .- x_PP)/tau_x .- depression_spike)
+            dx_VPdt = ((1 .- x_VP)/tau_x .- depression_spike)
+            du_VSdt = ((1 .- u_VS)/tau_u .+ facilitation_spike)
+#=
+            dx_EPdt .-= (depression_spike)
+            dx_PPdt .-= (depression_spike)
+            dx_VPdt .-= (depression_spike)
+            du_VSdt .+= (facilitation_spike)
 
-            #the r variables are not defined constants (makes sense, that's the DE's), neither is u_VS (oversight on my end?) and x_ also isn't
-            #
+=#
 
             #update values:
-            r_E += (dr_Edt * dt)
-            r_P += (dr_Pdt * dt)
-            r_S += (dr_Sdt * dt)
-            r_V += (dr_Vdt * dt)
-
+#=
             x_EP += clamp(dx_EPdt * dt, 0.0, 1.0)
             x_PP += clamp(dx_PPdt * dt, 0.0, 1.0)
             x_VP += clamp(dx_VPdt * dt, 0.0, 1.0)
             u_VS += clamp(du_VSdt * dt, 0.0, 1.0)
+=#
+            x_EP .+= dx_EPdt*dt
+            x_PP .+= dx_PPdt*dt
+            x_VP .+= dx_VPdt*dt
+            u_VS .+= du_VSdt*dt
 
     end #end loop over time
 
@@ -617,11 +632,11 @@ function stp_param()
     U_f = 1 #facilitation factor
     U_max = 3 #maximum value of the facilitation variable
     ###
-    g_E = 4 #background input to E
-    g_P = 4 #background input to PV
-    g_S = 3 #background input to SST
-    g_V = 4 #background input to VIP
-    c = 3 #top-down input to VIP
+    g_E = 4 #+ 5 #background input to E
+    g_P = 4 #+ 5 #background input to PV
+    g_S = 3 #+ 5 #background input to SST
+    g_V = 4 #+ 5 #background input to VIP
+    c = 3 #+ 5 #top-down input to VIP
     #
 
     alpha = 1
