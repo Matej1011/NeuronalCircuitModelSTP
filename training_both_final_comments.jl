@@ -47,11 +47,11 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     weights[1:Ne, (1+Ne):(Ne+Np)] .= (jpe) #E to PV
     weights[1:Ne, (1+Ne+Np):(Ne+Np+Ns)] .= (jse) #E to SST
     weights[1:Ne, (1+Ne+Np+Ns):Ncells] .= (jve) #E to VIP
-    weights[(1+Ne):(Ne+Np), 1:Ne] .= (jep0) #PV to E start
-    weights[(1+Ne):(Ne+Np), (1+Ne):(Ne+Np)] .= (jpp) #PV to PV
-    weights[(1+Ne):(Ne+Np), (1+Ne+Np+Ns):Ncells] .= jvp #PV to VIP
+    weights[(1+Ne):(Ne+Np), 1:Ne] .= (0.5 * jep0) #PV to E start
+    weights[(1+Ne):(Ne+Np), (1+Ne):(Ne+Np)] .= (1.12*jpp) #PV to PV
+    weights[(1+Ne):(Ne+Np), (1+Ne+Np+Ns):Ncells] .= (0.5 * jvp) #PV to VIP
     weights[(1+Ne+Np):(Ne+Np+Ns), 1:Ne] .= (jes0) #SST to E start
-    weights[(1+Ne+Np):(Ne+Np+Ns), (1+Ne):(Ne+Np)] .= (jps) #SST to PV
+    weights[(1+Ne+Np):(Ne+Np+Ns), (1+Ne):(Ne+Np)] .= (1.2*jps) #SST to PV
     weights[(1+Ne+Np):(Ne+Np+Ns), (1+Ne+Np+Ns):Ncells] .= jvs #SST to VIP
     weights[(1+Ne+Np+Ns):Ncells, (1+Ne+Np):(Ne+Np+Ns)] .= (jsv) #VIP to SST
     weights[1:Ne, 1:Ne] .= jee0 #E to E
@@ -215,7 +215,7 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
             end
 
 #testing to see what happens when I increase the current at a certain point in time
-            if ((tt > 500) && (tt < 20000) && (cc > (Ne+Ns+Np)))
+            if ((tt > 5000) && (tt < 25000) && (cc > (Ne+Ns+Np)))
                 I_ext[cc] += dt * 0.05 / tauedecay
             end
 
@@ -299,7 +299,7 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
                         @views Ip[(1+Ne):(Ne+Np)] .+= weights[cc, (1+Ne):(Ne+Np)] .* x_PP[(1+Ne):(Ne+Np)] / taupdecay #PV-->PV connections; STD
                         @views Ip[(1+Ne+Np+Ns):Ncells] .+= (weights[cc, (1+Ne+Np+Ns):Ncells] .* x_VP[(1+Ne+Np+Ns):Ncells] / taupdecay) #PV-->VIP connections; STD
 
-                        depression_spike[cc] = U_d * x_EP[cc]
+                        depression_spike[cc] = U_d
 
                     elseif (Ne+Np) < cc <= (Np+Ne+Ns)
                         @views Is[1:(Ne+Np+Ns)] .+= weights[cc, 1:(Ne+Np+Ns)] / tausdecay #S --> E, PV, S(no S-->S exist) connections; normal
@@ -362,25 +362,16 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
 #            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
 
             #Tsodyks-Markram model for STP mechanisms (Neural networks with dynamic synapses.Neural Comput.10, 821–835 (1998).)
-            dx_EPdt = ((1 .- x_EP)/tau_x .- depression_spike)
-            dx_PPdt = ((1 .- x_PP)/tau_x .- depression_spike)
-            dx_VPdt = ((1 .- x_VP)/tau_x .- depression_spike)
+            dx_EPdt = ((1 .- x_EP)/tau_x .- (depression_spike .* x_EP))
+            dx_PPdt = ((1 .- x_PP)/tau_x .- (depression_spike .* x_PP))
+            dx_VPdt = ((1 .- x_VP)/tau_x .- (depression_spike .* x_VP))
             du_VSdt = ((1 .- u_VS)/tau_u .+ facilitation_spike)
-#=
-            dx_EPdt .-= (depression_spike)
-            dx_PPdt .-= (depression_spike)
-            dx_VPdt .-= (depression_spike)
-            du_VSdt .+= (facilitation_spike)
-
-=#
+            #depression_spike is just an Ncell -long array with a value of either U_d or 0 at each index
+            #depending on whether or not the given neuron spiked. Afterwards multiply by the appropriate x_
+            #this should hopefully work alright
 
             #update values:
-#=
-            x_EP += clamp(dx_EPdt * dt, 0.0, 1.0)
-            x_PP += clamp(dx_PPdt * dt, 0.0, 1.0)
-            x_VP += clamp(dx_VPdt * dt, 0.0, 1.0)
-            u_VS += clamp(du_VSdt * dt, 0.0, 1.0)
-=#
+
             x_EP .+= dx_EPdt*dt
             x_PP .+= dx_PPdt*dt
             x_VP .+= dx_VPdt*dt
