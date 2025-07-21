@@ -47,9 +47,9 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     weights[1:Ne, (1+Ne):(Ne+Np)] .= (jpe) #E to PV
     weights[1:Ne, (1+Ne+Np):(Ne+Np+Ns)] .= (jse) #E to SST
     weights[1:Ne, (1+Ne+Np+Ns):Ncells] .= (jve) #E to VIP
-    weights[(1+Ne):(Ne+Np), 1:Ne] .= (0.5 * jep0) #PV to E start
-    weights[(1+Ne):(Ne+Np), (1+Ne):(Ne+Np)] .= (1.12*jpp) #PV to PV
-    weights[(1+Ne):(Ne+Np), (1+Ne+Np+Ns):Ncells] .= (0.5 * jvp) #PV to VIP
+    weights[(1+Ne):(Ne+Np), 1:Ne] .= (0.6 * jep0) #PV to E start
+    weights[(1+Ne):(Ne+Np), (1+Ne):(Ne+Np)] .= (1.13*jpp) #PV to PV
+    weights[(1+Ne):(Ne+Np), (1+Ne+Np+Ns):Ncells] .= (0.6 * jvp) #PV to VIP
     weights[(1+Ne+Np):(Ne+Np+Ns), 1:Ne] .= (jes0) #SST to E start
     weights[(1+Ne+Np):(Ne+Np+Ns), (1+Ne):(Ne+Np)] .= (1.2*jps) #SST to PV
     weights[(1+Ne+Np):(Ne+Np+Ns), (1+Ne+Np+Ns):Ncells] .= jvs #SST to VIP
