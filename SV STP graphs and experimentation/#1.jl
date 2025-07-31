@@ -17,29 +17,6 @@ function save_param(x_name, x_tuple)
     end
     return dict_param
 end
-#=
-function calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
-    
-    tau_E, tau_P, tau_S, tau_V, J_EE, J_EP, J_ES, J_PE, J_PP, J_PS, J_SE, J_SV, J_VE, J_VP, J_VS, U_d, tau_u, U_f, U_max, g_E, g_P, g_S, g_V, c, alpha = stp_param()
-
-    dr_Edt = (-r_E + ((J_EE*r_E - x_EP*J_EP*r_P - J_ES*r_S + g_E + alpha) + abs(J_EE*r_E - x_EP*J_EP*r_P - J_ES*r_S + g_E + alpha))/2) / tau_E
-    dr_Pdt = (-r_P + ((J_PE*r_E - x_PP*J_PP*r_P - J_PS*r_S + g_P + alpha) + abs(J_PE*r_E - x_PP*J_PP*r_P - J_PS*r_S + g_P + alpha))/2) / tau_P
-    dr_Sdt = (-r_S + ((J_SE*r_E - J_SV*r_V + g_S) + abs(J_SE*r_E - J_SV*r_V + g_S))/2) / tau_S
-    dr_Vdt = (-r_V + ((J_VE*r_E - x_VP*J_VP*r_P - u_VS*J_VS*r_S + g_V + c) + abs(J_VE*r_E - x_VP*J_VP*r_P - u_VS*J_VS*r_S + g_V + c))/2) / tau_V
-    return dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt
-end
-=#
-function should_I_spike(frequency, time)
-
-    frequency /= 1000 #convert from 1/s to 1/ms
-    period = 1/frequency #period is now in ms
-
-    #if the time divided by the period has no remainder then we should spike
-    return isapprox(time % period, 0.0, atol=1e-5)
-
-end
-
-
 
 function sim(zzz) #runs simulation given weight matrix and subpopulations
     T, N_trials, stim_rate, train_start, t_weightsave, time_weightsave,
@@ -55,10 +32,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
 
     tau_E, tau_P, tau_S, tau_V, J_EE, J_EP, J_ES, J_PE, J_PP, J_PS, J_SE, J_SV, J_VE, J_VP, J_VS, U_d, tau_u, U_f, U_max, g_E, g_P, g_S, g_V, c, alpha = stp_param()
 
-    flag = false
-
-
-
     weights = zeros(Float64, Ncells, Ncells)
     weights[1:Ne, (1+Ne):(Ne+Np)] .= (jpe) #E to PV
     weights[1:Ne, (1+Ne+Np):(Ne+Np+Ns)] .= (jse) #E to SST
@@ -72,29 +45,11 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     weights[(1+Ne+Np+Ns):Ncells, (1+Ne+Np):(Ne+Np+Ns)] .= (jsv) #VIP to SST
     weights[1:Ne, 1:Ne] .= 1*jee0 #E to E
 
-    #parameter for printing out less stuff
-    cc_prev = 0
-
-    # "x_ij is a STD variable limited to the interval (0,1] for the synaptic connection from population j to population i"
-    #x_EP = ones(Ncells)
-    #x_PP = ones(Ncells)
-    #x_VP = ones(Ncells)
-    #u_VS = zeros(Ncells)
-    #u_VS .= U_f
-
     u_SV = ones(Ncells)
     x_SV = ones(Ncells)
     #u_SV .= U_f
     dx_SVdt = zeros(Ncells)
     du_SVdt = zeros(Ncells)
-
-    #dx_EPdt = zeros(Ncells)
-    #dx_PPdt = zeros(Ncells)
-    #dx_VPdt = zeros(Ncells)
-    #du_VSdt = zeros(Ncells)
-
-    #in Hz
-    frequency = 50
 
     time1 = time()
 
@@ -169,10 +124,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     inormalize = round(Int, dtnormalize / dt) #homeostatic normalisation every inormalised step
 
     #Ncells/10 rows and Nsteps/10 columns
-    #x_EP_history = zeros(Float64, Int(Np), Int(Nsteps/10))
-    #x_PP_history = zeros(Float64, Int(Np), Int(Nsteps/10))
-    #x_VP_history = zeros(Float64, Int(Np), Int(Nsteps/10))
-    #u_VS_history = zeros(Float64, Int(Ns), Int(Nsteps/10))
     x_SV_history = zeros(Float64, Int(Np), Int(Nsteps/10))
     u_SV_history = zeros(Float64, Int(Ns), Int(Nsteps/10))
 
@@ -187,7 +138,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
     depression_spike = zeros(Ncells)
     facilitation_spike = zeros(Ncells)
 
-    Counting = 0
     for tt = 1:Nsteps #loop over time
         ###PROGRESS###
         if mod(tt, Nsteps / 100) == 1  #print percent complete
@@ -308,34 +258,6 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
                 end
                 ###LIF NEURONS END###
 
-#=
-                #so if it's the right time given the frequency and it's either an E or PV, spike it
-                if(should_I_spike(frequency, t) && (cc <= (Ne + Np)))
-
-                    #if((abs(cc_prev - cc) > 10) || (cc_prev == 0))
-                        #print("cc=", cc, "  t=", t, " prev_I_ext: ", I_ext[cc])
-                    if(cc<=Ne)
-                        #I_ext[cc] += dt * 0.05 / tauedecay
-                        #spiked[cc] = true
-
-                    else
-                        #I_ext[cc] += dt * 0.05 / taupdecay
-                        #spiked[cc] = true
-
-                    end
-                        #print(" post_I_ext: ", I_ext[cc], "\n")
-                    #else
-                    #    I_ext[cc] += dt * 5 / tauedecay
-                    #end
-                    cc_prev = cc
-
-                #separate if condition to check if it's a VIP neuron since they should get diff input
-                elseif(should_I_spike(frequency, t) && (cc >Ne+Np+Ns))
-                    #I_ext[cc] += dt * 0.05 / tauvdecay
-                    v[cc] *= 1.015
-                end
-=#
-
                 depression_spike[cc] = 0
                 facilitation_spike[cc] = 0
                 
@@ -365,19 +287,9 @@ function sim(zzz) #runs simulation given weight matrix and subpopulations
 
                     elseif Ne < cc <= Np+Ne
                         Ip .+= weights[cc, :] / taupdecay
-                       
-                        #there are no PV-->SST connections so it's just altered stuff:
-                        
-                        #@views Ip[1:Ne] .+= weights[cc, 1:Ne] .* x_EP[1:Ne] / taupdecay #PV-->E connections; STD
-                        #@views Ip[(1+Ne):(Ne+Np)] .+= weights[cc, (1+Ne):(Ne+Np)] .* x_PP[(1+Ne):(Ne+Np)] / taupdecay #PV-->PV connections; STD
-                        #@views Ip[(1+Ne+Np+Ns):Ncells] .+= (weights[cc, (1+Ne+Np+Ns):Ncells] .* x_VP[(1+Ne+Np+Ns):Ncells] / taupdecay) #PV-->VIP connections; STD
-
-                        #depression_spike[cc] = U_d
 
                     elseif (Ne+Np) < cc <= (Np+Ne+Ns)
                         @views Is[1:(Ne+Np+Ns)] .+= weights[cc, 1:(Ne+Np+Ns)] / tausdecay #S --> E, PV, S(no S-->S exist) connections; normal
-                        #@views Is[(1+Ne+Np+Ns):Ncells] .+= weights[cc, (1+Ne+Np+Ns):Ncells] .* u_VS[(1+Ne+Np+Ns):Ncells] / tausdecay #S-->VIP connections; STF
-                        #facilitation_spike[cc] = U_f*(U_max - u_VS[cc])
 
                         if(cc ∈ range_plast_sst)
                             @views Is[(1+Ne+Np+Ns):Ncells] .+= weights[cc, (1+Ne+Np+Ns):Ncells] / tausdecay .* x_SV[(1+Ne+Np+Ns):Ncells]
@@ -439,22 +351,12 @@ cc_prev = 0
 #            dr_Edt, dr_Pdt, dr_Sdt, dr_Vdt = calculate_rate_derivs(r_E, r_P, r_S, r_V, x_EP, x_PP, x_VP, u_VS)
 
             #Tsodyks-Markram model for STP mechanisms (Neural networks with dynamic synapses.Neural Comput.10, 821–835 (1998).)
-            #dx_EPdt = ((1 .- x_EP)/tau_x .- (depression_spike .* x_EP))
-            #dx_PPdt = ((1 .- x_PP)/tau_x .- (depression_spike .* x_PP))
-            #dx_VPdt = ((1 .- x_VP)/tau_x .- (depression_spike .* x_VP))
-            #du_VSdt = ((1 .- u_VS)/tau_u .+ facilitation_spike)
 
         du_SVdt = ((1 .- u_SV)/tau_u .+ facilitation_spike)
         dx_SVdt = ((1 .- x_SV)/tau_x .- (depression_spike .* x_SV))
 
             #depression_spike is just an Ncell -long array with a value of either U_d or 0 at each index
             #depending on whether or not the given neuron spiked. Afterwards multiply by the appropriate x_
-            #this should hopefully work alright
-            #update values:
-            #x_EP .+= dx_EPdt.*dt
-            #x_PP .+= dx_PPdt.*dt
-            #x_VP .+= dx_VPdt.*dt
-            #u_VS .+= du_VSdt.*dt
 
         x_SV .+= dx_SVdt*dt
         u_SV .+= du_SVdt*dt
@@ -493,18 +395,6 @@ cc_prev = 0
     #Input parameters
     JLD.save(save_weights_name * "parameters/" * "input_parameters" * description_save, used_param)
 
-#=    jldopen("x_EP_history.jld", "w") do file
-        write(file, "x_EP_history", x_EP_history)
-    end
-    jldopen("x_PP_history.jld", "w") do file
-        write(file, "x_PP_history", x_PP_history)
-    end
-    jldopen("x_VP_history.jld", "w") do file
-        write(file, "x_VP_history", x_VP_history)
-    end
-    jldopen("u_VS_history.jld", "w") do file
-        write(file, "u_VS_history", u_VS_history)
-    end=#
     jldopen("u_SV_history.jld", "w") do file
         write(file, "u_SV_history", u_SV_history)
     end
@@ -536,18 +426,6 @@ cc_prev = 0
     
     print("\nidx_of_most_spikes (PV and SST) = ", idx_of_most_spikes)
     print("\nmost_spikes = ", most_spikes)
-
-#after first run:
-#=idx_of_most_spikes = 4063
-most_spikes = 1938=#
-
-#second time (only looking at PV and SST range and with /10 in the DE for x_PP):
-#=idx_of_most_spikes (PV and SST) = 4403
-most_spikes = 1923=#
-
-#third time (again only PV and SST but with regular DEs):
-#=idx_of_most_spikes (PV and SST) = 4204
-most_spikes = 1711=#
 
 end
 
@@ -765,145 +643,3 @@ return tau_E, tau_P, tau_S, tau_V, J_EE, J_EP, J_ES,
 end
 
 sim(1)
-
-#20_500 is 20% network (20 % DisNet, 80% Inhnet)
-#20_050 is 50% network (50 % DisNet, 50% Inhnet)
-#20_600 is 80% network (80% DisNet, 20% Inhnet)
-
-    #=
-    #S2 Networks that also include E-to-E STD:
-    tau_E = 20 #time const of E rate dynamics
-    tau_P = 10 #time const of PV rate dynamics
-    tau_S = 10 #time const of SST rate dynamics
-    tau_V = 10 #time const of VIP rate dynamics
-    J_EE = 1.8 #connection strength from E to E
-    J_EP = 2.0 #connection strength PV to E
-    J_ES = 1.0 #connection strength SST to E
-    J_PE = 1.4 #connection strength E to PV
-    J_PP = 1.3 #connection strength PV to PV
-    J_PS = 0.8 #connection strength SST to PV
-    J_SE = 0.9 #connection strength E to SST
-    J_SV = 0.6 #connection strength VIP to SST
-    J_VE = 1.1 #connection strength E to VIP
-    J_VP = 0.4 #connection strength PV to VIP
-    J_VS = 0.4 #connection strength SST to VIP
-    ###
-    tau_x = 100 #time constant of short-term depression
-    tauEE_x = 10 #time constant of E-to-E short term depression
-    U_d = 1 #depression factor
-    UEE_d = 0.3 #E-toE depression factor
-    tau_u = 400 #time constant of short-term facilitation
-    U_f = 1 #facilitation factor
-    U_max = 3 #maximum value of the facilitation variable
-    ###
-    g_E = 4 #background input to E
-    g_P = 4 #background input to PV
-    g_S = 3 #background input to SST
-    g_V = 4 #background input to VIP
-    c = 3 #top-down input to VIP
-    =#
-
-    #=
-    #S3 Networks also including E-to-SST STF:
-    tau_E = 20 #time const of E rate dynamics
-    tau_P = 10 #time const of PV rate dynamics
-    tau_S = 10 #time const of SST rate dynamics
-    tau_V = 10 #time const of VIP rate dynamics
-    J_EE = 1.3 #connection strength from E to E
-    J_EP = 1.5 #connection strength PV to E
-    J_ES = 0.9 #connection strength SST to E
-    J_PE = 1.1 #connection strength E to PV
-    J_PP = 1.3 #connection strength PV to PV
-    J_PS = 0.8 #connection strength SST to PV
-    J_SE = 0.5 #connection strength E to SST
-    J_SV = 0.6 #connection strength VIP to SST
-    J_VE = 1.1 #connection strength E to VIP
-    J_VP = 0.3 #connection strength PV to VIP
-    J_VS = 0.2 #connection strength SST to VIP
-    ###
-    tau_x = 100 #time constant of short-term depression
-    U_d = 1 #depression factor
-    tau_u = 400 #time constant of short-term facilitation
-    U_f = 1 #facilitation factor
-    U_max = 3 #maximum value of the facilitation variable
-    USE_max = 2 #maximum value of the E-to-SST facilitation variable
-    ###
-    g_E = 4 #background input to E
-    g_P = 4 #background input to PV
-    g_S = 3 #background input to SST
-    g_V = 4 #background input to VIP
-    c = 3 #top-down input to VIP
-    =#
-
-    #=
-    #S4 Networks with short-term plasticity on all existing connections:
-    tau_E = 20 #time const of E rate dynamics
-    tau_P = 10 #time const of PV rate dynamics
-    tau_S = 10 #time const of SST rate dynamics
-    tau_V = 10 #time const of VIP rate dynamics
-    J_EE = 1.7 #connection strength from E to E
-    J_EP = 2.1 #connection strength PV to E
-    J_ES = 1.5 #connection strength SST to E
-    J_PE = 1.0 #connection strength E to PV
-    J_PP = 1.2 #connection strength PV to PV
-    J_PS = 1.3 #connection strength SST to PV
-    J_SE = 0.7 #connection strength E to SST
-    J_SV = 0.4 #connection strength VIP to SST
-    J_VE = 0.9 #connection strength E to VIP
-    J_VP = 0.5 #connection strength PV to VIP
-    J_VS = 0.4 #connection strength SST to VIP
-    ###
-    tau_x = 100 #time constant of short-term depression
-    tauEE_x = 10 #time constant of E-to-E short-term depression
-    UEE_d = 0.19 #E-to-E depression factor
-    UEP_d = 0.49 #PV-to-E depression factor
-    UES_d = 0.12 #SST-to-E depression factor
-    UPE_d = 0.04 #E-to-PV depression factor
-    UPP_d = 0.5 #PV-to-PV depression factor
-    UPS_d = 0.11 #SST-to-PV depression factor
-    UVP_d = 0.37 #PV-to-VIP depression factor
-    tau_u = 400 #time constant of short-term facilitation
-    USE_f = 0.18 #facilitation factor
-    UVE_f = 0.03 #facilitation factor
-    UVS_f = 0.28 #facilitation factor
-    USV_f = 0.05 #facilitation factor
-    U_max = 3 #maximum value of the facilitation variable
-    USE_max = 2 #maximum value of the E-to-SST facilitation variable
-    ###
-    g_E = 4 #background input to E
-    g_P = 4 #background input to PV
-    g_S = 3 #background input to SST
-    g_V = 4 #background input to VIP
-    c = 3 #top-down input to VIP
-    =#
-
-    #=
-    #S5 For sensitivity analysis of network connectivity:
-    tau_E = 20 #time const of E rate dynamics
-    tau_P = 10 #time const of PV rate dynamics
-    tau_S = 10 #time const of SST rate dynamics
-    tau_V = 10 #time const of VIP rate dynamics
-    J_EE = [1.2, 2.2] #connection strength from E to E
-    J_EP = 1.7 #connection strength PV to E
-    J_ES = 1.4 #connection strength SST to E
-    J_PE = 2.2 #connection strength E to PV
-    J_PP = 1.6 #connection strength PV to PV
-    J_PS = 1.1 #connection strength SST to PV
-    J_SE = 1.0 #connection strength E to SST
-    J_SV = 0.6 #connection strength VIP to SST
-    J_VE = 1.3 #connection strength E to VIP
-    J_VP = 0.4 #connection strength PV to VIP
-    J_VS = 0.4 #connection strength SST to VIP
-    ###
-    tau_x = 100 #time constant of short-term depression
-    U_d = 1 #depression factor
-    tau_u = 400 #time constant of short-term facilitation
-    U_f = 1 #facilitation factor
-    U_max = 3 #maximum value of the facilitation variable
-    ###
-    g_E = 4 #background input to E
-    g_P = 4 #background input to PV
-    g_S = 3 #background input to SST
-    g_V = 4 #background input to VIP
-    c = 3 #top-down input to VIP
-    =#
