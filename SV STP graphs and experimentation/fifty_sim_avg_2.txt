@@ -1,0 +1,50 @@
+
+These are the results of simulations run with the exact same code as before (the code that generated the data found in fifty_sim_avg_1.txt) except U_f is twice as large (U_f = 2 instead of 1)
+
+10 sims boosted U_f #1:
+
+Mean skewness about zero (E) = 0.1776767435114792
+Mean skewness about zero (PV) = 0.15301251663126955
+Mean skewness about zero (SST, depressive) = -1.2668135113084102
+Mean skewness about zero (SST, facilitative) = -1.480604501445366
+Mean skewness about zero (VIP) = 10.123563910100819
+
+10 sims boosted U_f #2:
+
+Mean skewness about zero (E) = 0.25062500669393833
+Mean skewness about zero (PV) = 0.27739265239359245
+Mean skewness about zero (SST, depressive) = -1.1752658106897984
+Mean skewness about zero (SST, facilitative) = -1.4893699985320152
+Mean skewness about zero (VIP) = 5.665379891186374
+
+10 sims boosted U_f #3:
+
+Mean skewness about zero (E) = 0.11655070933627361
+Mean skewness about zero (PV) = 0.21385784884481746
+Mean skewness about zero (SST, depressive) = -1.1288406707052914
+Mean skewness about zero (SST, facilitative) = -1.1605293219668598
+Mean skewness about zero (VIP) = 8.365134417262766
+
+10 sims boosted U_f #4:
+
+Mean skewness about zero (E) = 0.06848063392487236
+Mean skewness about zero (PV) = 0.20849625194593702
+Mean skewness about zero (SST, depressive) = -0.5348381146558339
+Mean skewness about zero (SST, facilitative) = -0.616763382127078
+Mean skewness about zero (VIP) = 2.491116045991302
+
+10 sims boosted U_f #5:
+
+Mean skewness about zero (E) = 0.19866962571631128
+Mean skewness about zero (PV) = 0.20442784760202315
+Mean skewness about zero (SST, depressive) = -0.35650263050183917
+Mean skewness about zero (SST, facilitative) = -0.3933256687759079
+Mean skewness about zero (VIP) = 2.723650321983
+
+Averages over all 50 simulations:
+
+Mean skewness about zero (E) = 0.16240054383657496
+Mean skewness about zero (PV) = 0.21143742348352795
+Mean skewness about zero (SST, depressive) = -0.8924521475722346
+Mean skewness about zero (SST, facilitative) = -1.0281185745694454
+Mean skewness about zero (VIP) = 5.873768917304853
