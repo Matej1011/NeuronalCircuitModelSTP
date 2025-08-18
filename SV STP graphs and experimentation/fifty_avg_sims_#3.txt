@@ -1,0 +1,160 @@
+
+Following are results after boosting the value of U_d from 1 to 2. Otherwise code remains the same as the first run with standard variables (U_d = 1, U_f = 1)
+
+There were outlier simulations which removed. For completeness I still kept all recorded values and my thoughts regarding the outliers in each batch of simulations as well as which were replaced and with what.
+The final results to actually use are indented.
+
+The main result, the final average for 50 simulations, I will put right here for convenience:
+
+TOTAL AVERAGES ACROSS 50 SIMULATIONS:
+Mean skewness about zero (E) = -0.017259304153350547
+Mean skewness about zero (PV) = 0.1196999985164422
+Mean skewness about zero (SST, depressive) = 0.10113420987983464
+Mean skewness about zero (SST, facilitative) = 0.09172632788277306
+Mean skewness about zero (VIP) = 0.1656987660942198
+
+----------------
+----------------
+
+10 sims boosted U_d #1 (REPLACED BELOW):
+
+Mean skewness about zero (E) = 0.009691953104736672
+Mean skewness about zero (PV) = 0.23225174801936577
+Mean skewness about zero (SST, depressive) = -1.3488041982062813
+Mean skewness about zero (SST, facilitative) = -1.9292643421318765
+Mean skewness about zero (VIP) = 8.50565014534796
+
+^I feel I should mention that two simulations had VIP skewness at ~36 and ~47 and the other 8 were all within 3 of 0. They also had very negative SST activations at around -9 and -4, respectively
+
+10 sims boosted U_d #2:
+
+  Mean skewness about zero (E) = -0.25870216029693227
+  Mean skewness about zero (PV) = 0.1263039242554072
+  Mean skewness about zero (SST, depressive) = 0.014901278343850554
+  Mean skewness about zero (SST, facilitative) = -0.0017169909564184183
+  Mean skewness about zero (VIP) = -0.5992765683899034
+
+10 sims boosted U_d #3 (REPLACED BELOW):
+
+Mean skewness about zero (E) = 0.6715801463681916
+Mean skewness about zero (PV) = 0.3240802959481541
+Mean skewness about zero (SST, depressive) = -2.0005642448781997
+Mean skewness about zero (SST, facilitative) = -1.5923350042247262
+Mean skewness about zero (VIP) = 14.727323857498419
+
+----------------
+10 sims boosted U_d #4:
+
+Mean skewness about zero (E) = -0.19286224308428995
+Mean skewness about zero (PV) = 0.0693488420032478
+Mean skewness about zero (SST, depressive) = -0.18682249980186721
+Mean skewness about zero (SST, facilitative) = -0.3022685421064594
+Mean skewness about zero (VIP) = 3.4965104361629074
+-
+for #4 this run may be disproportionately affecting the results as the only one where VIP skewness reaches double digits:
+Sim 3 Complete
+...
+Skewness about zero (E) = 0.1024523814943945
+Skewness about zero (PV) = 0.29110642845856033
+Skewness about zero (SST, depressive) = -4.38519724991592
+Skewness about zero (SST, facilitative) = -5.134391482639304
+Skewness about zero (VIP) = 32.34847966203812
+----------------
+replacing the simulation above with:
+Skewness about zero (E) = -0.18006466620630515
+Skewness about zero (PV) = 0.4229678625759912
+Skewness about zero (SST, depressive) = 0.5916270275876779
+Skewness about zero (SST, facilitative) = 0.2891791844946725
+Skewness about zero (VIP) = -0.9317448765976838
+
+FINAL AVERAGES:
+  Mean skewness about zero (E) = -0.2211139478543599
+  Mean skewness about zero (PV) = 0.08253498541499089
+  Mean skewness about zero (SST, depressive) = 0.3108599279484926
+  Mean skewness about zero (SST, facilitative) = 0.24008852460693827
+  Mean skewness about zero (VIP) = 0.1684879822993268
+
+----------------
+
+10 sims boosted U_d #5:
+
+  Mean skewness about zero (E) = 0.11230575059414187
+  Mean skewness about zero (PV) = 0.164748945931017
+  Mean skewness about zero (SST, depressive) = 0.0024889583948682903
+  Mean skewness about zero (SST, facilitative) = 0.03620535115250686
+  Mean skewness about zero (VIP) = -0.27757108962539495
+
+--------------------------------
+20 more simulations to potentially replace outliers (sims with uncommonly high activations) (sims 1 and 3):
+
+#1 (replacing #1 above):
+
+Running 10 straight:
+Mean skewness about zero (E) = 0.25489634828602886
+Mean skewness about zero (PV) = 0.13328061739844213
+Mean skewness about zero (SST, depressive) = -0.3439194280005108
+Mean skewness about zero (SST, facilitative) = -0.21762572130321675
+Mean skewness about zero (VIP) = 3.73052448743342
+
+One outlier in these 10:
+Skewness about zero (E) = 1.9502478843957505
+Skewness about zero (PV) = 1.1238819500029291
+Skewness about zero (SST, depressive) = -3.9013947272360374
+Skewness about zero (SST, facilitative) = -3.3076125071030957
+Skewness about zero (VIP) = 25.750888102226593
+
+Rerun one more simulation:
+Mean skewness about zero (E) = 0.4530109949771853
+Mean skewness about zero (PV) = -0.13214911634415735
+Mean skewness about zero (SST, depressive) = 0.03494933084680585
+Mean skewness about zero (SST, facilitative) = 0.04137862351325133
+Mean skewness about zero (VIP) = 1.05989154157768
+
+NEW AVERAGES for 10 simulations:
+  Mean skewness about zero (E) = 0.10517265934417235
+  Mean skewness about zero (PV) = 0.007677510763733478
+  Mean skewness about zero (SST, depressive) = 0.049714977807773564
+  Mean skewness about zero (SST, facilitative) = 0.11727339175841796
+  Mean skewness about zero (VIP) = 1.2614248313685288
+----------------
+#2 (replacing #3 above):
+
+Running 10 straight:
+Mean skewness about zero (E) = 0.48208895344295294
+Mean skewness about zero (PV) = 0.4859102192385766
+Mean skewness about zero (SST, depressive) = -0.8290885226455315
+Mean skewness about zero (SST, facilitative) = -0.7892503429966511
+Mean skewness about zero (VIP) = 7.10270022515264
+
+Two outliers:
+Skewness about zero (E) = 0.9219666298026514
+Skewness about zero (PV) = 1.10454728903039
+Skewness about zero (SST, depressive) = -3.8975742754532496
+Skewness about zero (SST, facilitative) = -3.818751426805625
+Skewness about zero (VIP) = 33.20313314615891
+-
+Skewness about zero (E) = 0.9301294166317458
+Skewness about zero (PV) = 0.8541845794042614
+Skewness about zero (SST, depressive) = -3.6689628268974497
+Skewness about zero (SST, facilitative) = -3.348530698066994
+Skewness about zero (VIP) = 37.06125808353941
+
+Rerun two simulations:
+Skewness about zero (E) = -0.3082375616442423
+Skewness about zero (PV) = 0.22574715462206413
+Skewness about zero (SST, depressive) = 0.265042706096648
+Skewness about zero (SST, facilitative) = 0.1632035990877224
+Skewness about zero (VIP) = -2.504340786718477
+-
+Skewness about zero (E) = -0.9001441518886378
+Skewness about zero (PV) = -0.9537712164025541
+Skewness about zero (SST, depressive) = 1.736364487049849
+Skewness about zero (SST, facilitative) = 1.2298313345303764
+Skewness about zero (VIP) = 4.496016513075815
+
+NEW AVERAGES for 10 simulations:
+  Mean skewness about zero (E) = 0.1760411774462252
+  Mean skewness about zero (PV) = 0.21723462621706244
+  Mean skewness about zero (SST, depressive) = 0.12770590690418816
+  Mean skewness about zero (SST, facilitative) = 0.06678136285242067
+  Mean skewness about zero (VIP) = 0.27542867481854166
