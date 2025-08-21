@@ -1,0 +1,20 @@
+all simulations done without STP mechanics. Only Iv .+= weights[cc, :] / tauvdecay
+
+10 sim avg #1:
+
+Mean skewness about zero (E) = 0.5014941842239865
+Mean skewness about zero (PV) = 0.2906655203493333
+Mean skewness about zero (SST, depressive) = -0.973972789964329
+Mean skewness about zero (SST, facilitative) = -0.9412056095371755
+Mean skewness about zero (VIP) = 4.560506504694195
+
+10 sim avg #2:
+
+Mean skewness about zero (E) = 0.2965274254307903
+Mean skewness about zero (PV) = 0.1265411509291153
+Mean skewness about zero (SST, depressive) = -0.2696999491809862
+Mean skewness about zero (SST, facilitative) = -0.4720247298869545
+Mean skewness about zero (VIP) = 1.153650199798184
+
+10 sim avg #3:
+
