@@ -18,3 +18,11 @@ Mean skewness about zero (VIP) = 1.153650199798184
 
 10 sim avg #3:
 
+Mean skewness about zero (E) = -0.4707603762285921
+Mean skewness about zero (PV) = -0.1449585947739213
+Mean skewness about zero (SST, depressive) = -0.14448497060778784
+Mean skewness about zero (SST, facilitative) = -0.22804515527155794
+Mean skewness about zero (VIP) = 4.7366869281126665
+
+10 sim avg #4:
+
